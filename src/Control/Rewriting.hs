@@ -128,7 +128,7 @@ only f = Match f Target
 -- or both succeed.
 infixr 1 >+>
 (>+>) :: Rule t -> Rule t -> Rule t
-a >+> b = (a >>> b) <|> a <|> b
+a >+> b = (a >>> try b) <|> b
 
 -- | Attempt to run a rule, falling back on the identity rule if it fails.
 try :: Rule a -> Rule a
