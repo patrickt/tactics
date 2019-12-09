@@ -1,4 +1,4 @@
-{-# LANGUAGE FlexibleContexts, GADTs, TypeOperators #-}
+{-# LANGUAGE FlexibleContexts, FlexibleInstances, GADTs, TypeOperators #-}
 
 -- | This module provides 'Rewrite', a monadic DSL that abstracts the
 -- details of rewriting a given datum into another type, supporting
@@ -91,6 +91,18 @@ instance Category Rewrite where
 instance Arrow Rewrite where
   (***) = Split
   arr f = fmap f target
+
+instance ArrowZero Rewrite where
+  zeroArrow = Empty
+
+instance ArrowPlus Rewrite where
+  (<+>) = Choice
+
+instance Semigroup (Rewrite t t) where
+  (<>) = Choice
+
+instance Monoid (Rewrite t t) where
+  mempty = id
 
 -- | 'target' extracts the 't' that a given 'Rewrite' is operating upon.
 --   Similar to a reader monad's 'ask' function. This is an alias for 'id'
