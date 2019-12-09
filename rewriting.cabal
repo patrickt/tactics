@@ -41,13 +41,13 @@ library
 
   default-language:    Haskell2010
 
-test-suite rewriting-test
+test-suite tactics-test
   type:                exitcode-stdio-1.0
   hs-source-dirs:      test
   main-is:             Spec.hs
 
   build-depends:       base ^>= 4.12.0.0
-                     , rewriting
+                     , tactics
 
 
   ghc-options:         -Wall

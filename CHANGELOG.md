@@ -1,6 +1,6 @@
 # Changelog
 
-`rewriting` uses [PVP Versioning][1].
+`tactics` uses [PVP Versioning][1].
 The changelog is available [on GitHub][2].
 
 0.0.0
@@ -9,4 +9,4 @@ The changelog is available [on GitHub][2].
 * Initially created.
 
 [1]: https://pvp.haskell.org
-[2]: https://github.com/patrickt/rewriting/releases
+[2]: https://github.com/patrickt/tactics/releases
