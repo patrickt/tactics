@@ -1,4 +1,4 @@
-{-# LANGUAGE FlexibleContexts, FlexibleInstances, GADTs, LambdaCase, TypeOperators #-}
+{-# LANGUAGE DerivingVia, FlexibleContexts, FlexibleInstances, GADTs, LambdaCase, StandaloneDeriving, TypeOperators #-}
 
 -- | This module provides 'Rewrite', a monadic DSL that abstracts the
 -- details of rewriting a given datum into another type, supporting
@@ -42,6 +42,7 @@ import           Control.Applicative
 import           Control.Arrow
 import           Control.Category
 import           Control.Monad
+import           Control.Selective
 import           Data.Coerce
 import           Data.Functor.Foldable
 import qualified Data.Functor.Foldable as Foldable
@@ -62,23 +63,15 @@ data Rewrite t a where
   Split  :: Rewrite b c -> Rewrite b' c' -> Rewrite (b, b') (c, c')
   -- We could have implemented this by changing the semantics of how Then is interpreted, but that would make Then and Sequence inconsistent.
   Match  :: (t -> Maybe u) -> Rewrite u a -> Rewrite t a
-  Pure   :: a -> Rewrite t a
   Then   :: Rewrite t b -> (b -> Rewrite t a) -> Rewrite t a
 
 -- | A 'Rule' is a 'Rewrite' with identical input and output types.
 type Rule t = Rewrite t t
 
-instance Functor (Rewrite t) where
-  fmap = liftA
-
-instance Applicative (Rewrite t) where
-  pure   = Pure
-  -- We can add a Sequence constructor to optimize this when we need.
-  (<*>)  = ap
-
-instance Alternative (Rewrite t) where
-  empty = Empty
-  (<|>) = Choice
+deriving via (WrappedArrow Rewrite t) instance Functor (Rewrite t)
+deriving via (WrappedArrow Rewrite t) instance Applicative (Rewrite t)
+deriving via (WrappedArrow Rewrite t) instance Alternative (Rewrite t)
+deriving via (SelectA (Rewrite t))    instance Selective (Rewrite t)
 
 instance Monad (Rewrite t) where
   (>>=) = Then
@@ -166,7 +159,6 @@ rewrite t = \case
   Target     -> pure t
   Match f m  -> foldMapA (`rewrite` m) (f t)
   Comp g f   -> rewrite t f >>= (`rewrite` g)
-  Pure a     -> pure a
   Empty      -> empty
   Then m f   -> rewrite t m >>= rewrite t . f
   Split f g  -> pure t >>= \(a, b) -> (,) <$> rewrite a f <*> rewrite b g
