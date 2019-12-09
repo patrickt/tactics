@@ -1,4 +1,4 @@
-{-# LANGUAGE FlexibleContexts, FlexibleInstances, GADTs, TypeOperators #-}
+{-# LANGUAGE FlexibleContexts, FlexibleInstances, GADTs, LambdaCase, TypeOperators #-}
 
 -- | This module provides 'Rewrite', a monadic DSL that abstracts the
 -- details of rewriting a given datum into another type, supporting
@@ -96,10 +96,10 @@ instance ArrowZero Rewrite where
   zeroArrow = Empty
 
 instance ArrowPlus Rewrite where
-  (<+>) = Choice
+  (<+>) = (<|>)
 
 instance Semigroup (Rewrite t t) where
-  (<>) = Choice
+  (<>) = (<|>)
 
 instance Monoid (Rewrite t t) where
   mempty = id
@@ -161,14 +161,15 @@ mjust = only id
 -- | Run one step of a 'Rewrite' computation. Look at 'recursively' if you want something
 -- that folds over subterms.
 rewrite :: (Alternative m, Monad m) => t -> Rewrite t a -> m a
-rewrite t (Choice a b) = rewrite t a <|> rewrite t b
-rewrite t Target       = pure t
-rewrite t (Match f m)  = foldMapA (`rewrite` m) (f t)
-rewrite t (Comp g f)   = rewrite t f >>= \x -> rewrite x g
-rewrite _ (Pure a)     = pure a
-rewrite _ Empty        = empty
-rewrite t (Then m f)   = rewrite t m >>= rewrite t . f
-rewrite t (Split f g)  = rewrite t id >>= \(a, b) -> (,) <$> rewrite a f <*> rewrite b g
+rewrite t = \case
+  Choice a b -> rewrite t a <|> rewrite t b
+  Target     -> pure t
+  Match f m  -> foldMapA (`rewrite` m) (f t)
+  Comp g f   -> rewrite t f >>= (`rewrite` g)
+  Pure a     -> pure a
+  Empty      -> empty
+  Then m f   -> rewrite t m >>= rewrite t . f
+  Split f g  -> pure t >>= \(a, b) -> (,) <$> rewrite a f <*> rewrite b g
 
 -- | Run a 'Rewrite' over a 'Recursive' data structure, leaf-to-root. Unlike recursion with
 -- the Lämmel combinators, this allows you to use a 'Rewrite' rather than just a 'Rule',
