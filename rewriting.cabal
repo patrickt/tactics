@@ -9,7 +9,7 @@ license:             MIT
 license-file:        LICENSE
 author:              Patrick Thomson
 maintainer:          patrick.william.thomson@gmail.com
-copyright:           2019 Patrick Thomson
+copyright:           2019 GitHub
 category:            Control
 build-type:          Simple
 extra-doc-files:     README.md
