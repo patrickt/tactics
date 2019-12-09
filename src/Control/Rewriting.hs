@@ -98,7 +98,8 @@ instance Monoid (Rewrite t t) where
   mempty = id
 
 -- | 'target' extracts the 't' that a given 'Rewrite' is operating upon.
---   Similar to a reader monad's 'ask' function. This is an alias for 'id'
+-- Similar to a reader monad's 'ask' function. This is an alias for 'id'
+-- and 'mempty'.
 target :: Rewrite t t
 target = id
 
