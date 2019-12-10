@@ -1,4 +1,5 @@
-{-# LANGUAGE DerivingVia, FlexibleContexts, FlexibleInstances, GADTs, LambdaCase, StandaloneDeriving, TypeOperators #-}
+{-# LANGUAGE DerivingVia, FlexibleContexts, FlexibleInstances, GADTs, LambdaCase, StandaloneDeriving, TupleSections,
+             TypeOperators #-}
 
 -- | This module provides 'Rewrite', a monadic DSL that abstracts the
 -- details of rewriting a given datum into another type, supporting
@@ -48,11 +49,15 @@ import           Data.Functor.Foldable
 import qualified Data.Functor.Foldable as Foldable
 import           Data.Maybe
 import           Data.Monoid
+import           Data.Profunctor (Choice, Profunctor, Strong)
+import qualified Data.Profunctor as P
 
 -- | The fundamental type of rewriting rules. A @Rewrite t a@ maps
 -- values of type @t@ to values of type @a@, supporting failure and choice.
 -- If you need to layer monadic effects on top of a 'Rewrite', use a 'Lift'
 -- effect.
+--
+-- This type is equivalent to 'Kleisli' @m@ for some 'Alternative' 'Monad' @m@.
 data Rewrite t a where
   -- TODO: Choice is inflexible and slow. A Sum over fs can be queried for its index, and we can build a jump table over that.
   -- We can copy NonDet to have fair conjunction or disjunction.
@@ -60,7 +65,6 @@ data Rewrite t a where
   Target :: Rewrite t t
   Empty  :: Rewrite t a
   Comp   :: Rewrite b c -> Rewrite a b -> Rewrite a c
-  Split  :: Rewrite b c -> Rewrite b' c' -> Rewrite (b, b') (c, c')
   -- We could have implemented this by changing the semantics of how Then is interpreted, but that would make Then and Sequence inconsistent.
   Match  :: (t -> Maybe u) -> Rewrite u a -> Rewrite t a
   Then   :: Rewrite t b -> (b -> Rewrite t a) -> Rewrite t a
@@ -87,8 +91,10 @@ instance Category Rewrite where
   (.) = Comp
 
 instance Arrow Rewrite where
-  (***) = Split
   arr f = fmap f target
+  first x = do
+    d <- fmap snd target
+    P.dimap fst (, d) x
 
 instance ArrowZero Rewrite where
   zeroArrow = Empty
@@ -96,11 +102,8 @@ instance ArrowZero Rewrite where
 instance ArrowPlus Rewrite where
   (<+>) = (<|>)
 
-instance Semigroup (Rewrite t t) where
-  (<>) = (<|>)
-
-instance Monoid (Rewrite t t) where
-  mempty = id
+instance ArrowChoice Rewrite where
+  f +++ g = (f >>> arr Left) ||| (g >>> arr Right)
 
 -- | 'target' extracts the 't' that a given 'Rewrite' is operating upon.
 -- Similar to a reader monad's 'ask' function. This is an alias for 'id'
@@ -124,10 +127,6 @@ purely = arr
 -- to the current 'target', the given rewrite action is executed with
 -- the result of that 'Just' as the new target; if 'Nothing' is
 -- returned, the action fails.
---
--- This is a low-level combinator useful for matching over
--- non-recursive types. When dealing with recursive types such as
--- 'Term', you'll generally use the 'enter' and 'narrow' combinators.
 refine :: (t -> Maybe u) -> Rewrite u a -> Rewrite t a
 refine = Match
 
@@ -167,7 +166,6 @@ rewrite t = \case
   Comp g f   -> rewrite t f >>= (`rewrite` g)
   Empty      -> empty
   Then m f   -> rewrite t m >>= rewrite t . f
-  Split f g  -> pure t >>= \(a, b) -> (,) <$> rewrite a f <*> rewrite b g
 
 -- | Run a 'Rewrite' over a 'Recursive' data structure, leaf-to-root. Unlike recursion with
 -- the Lämmel combinators, this allows you to use a 'Rewrite' rather than just a 'Rule',
