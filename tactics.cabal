@@ -25,7 +25,7 @@ library
   exposed-modules:     Control.Rewriting
 
 
-  build-depends:       base ^>= 4.12 && < 4.14
+  build-depends:       base >= 4.12 && < 4.14
                      , selective ^>= 0.3
                      , profunctors ^>= 5.5
                      , recursion-schemes ^>= 5.1.3
