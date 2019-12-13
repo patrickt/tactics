@@ -1,4 +1,4 @@
-{-# LANGUAGE DerivingVia, FlexibleContexts, FlexibleInstances, GADTs, LambdaCase, StandaloneDeriving, TupleSections,
+{-# LANGUAGE DeriveFunctor, DerivingVia, FlexibleContexts, FlexibleInstances, GADTs, LambdaCase, StandaloneDeriving, TupleSections,
              TypeOperators #-}
 
 -- | This module provides 'Rewrite', a monadic DSL that abstracts the
@@ -72,7 +72,7 @@ data Rewrite t a where
 -- | A 'Rule' is a 'Rewrite' with identical input and output types.
 type Rule t = Rewrite t t
 
-deriving via (WrappedArrow Rewrite t) instance Functor (Rewrite t)
+deriving instance Functor (Rewrite t)
 deriving via (WrappedArrow Rewrite t) instance Applicative (Rewrite t)
 deriving via (WrappedArrow Rewrite t) instance Alternative (Rewrite t)
 deriving via (SelectA (Rewrite t))    instance Selective (Rewrite t)
