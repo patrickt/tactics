@@ -2,7 +2,7 @@ cabal-version:       2.0
 name:                tactics
 version:             0.0.0
 synopsis:            A library for strategic rewriting.
-description:         A library for strategic rewriting.
+description:         A library for strategic rewriting, inspired by Lämmel et al.'s "The Essence of Strategic Programming".
 homepage:            https://github.com/patrickt/tactics
 bug-reports:         https://github.com/patrickt/tactic/issues
 license:             MIT
