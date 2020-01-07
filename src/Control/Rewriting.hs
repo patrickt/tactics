@@ -1,4 +1,4 @@
-{-# LANGUAGE DerivingVia, FlexibleContexts, FlexibleInstances, GADTs, LambdaCase, StandaloneDeriving, TupleSections,
+{-# LANGUAGE DeriveFunctor, DerivingVia, FlexibleContexts, FlexibleInstances, GADTs, LambdaCase, StandaloneDeriving, TupleSections,
              TypeOperators #-}
 
 -- | This module provides 'Rewrite', a monadic DSL that abstracts the
@@ -72,15 +72,15 @@ data Rewrite t a where
 -- | A 'Rule' is a 'Rewrite' with identical input and output types.
 type Rule t = Rewrite t t
 
-deriving via (WrappedArrow Rewrite t) instance Functor (Rewrite t)
-deriving via (WrappedArrow Rewrite t) instance Applicative (Rewrite t)
-deriving via (WrappedArrow Rewrite t) instance Alternative (Rewrite t)
-deriving via (SelectA (Rewrite t))    instance Selective (Rewrite t)
-deriving via (Alt (Rewrite t) t)      instance Semigroup (Rewrite t t)
-deriving via (Alt (Rewrite t) t)      instance Monoid (Rewrite t t)
-deriving via (P.WrappedArrow Rewrite) instance Profunctor Rewrite
-deriving via (P.WrappedArrow Rewrite) instance Strong Rewrite
-deriving via (P.WrappedArrow Rewrite) instance Choice Rewrite
+deriving via (WrappedMonad (Rewrite t)) instance Functor (Rewrite t)
+deriving via (WrappedArrow Rewrite t)   instance Applicative (Rewrite t)
+deriving via (WrappedArrow Rewrite t)   instance Alternative (Rewrite t)
+deriving via (SelectA (Rewrite t))      instance Selective (Rewrite t)
+deriving via (Alt (Rewrite t) t)        instance Semigroup (Rewrite t t)
+deriving via (Alt (Rewrite t) t)        instance Monoid (Rewrite t t)
+deriving via (P.WrappedArrow Rewrite)   instance Profunctor Rewrite
+deriving via (P.WrappedArrow Rewrite)   instance Strong Rewrite
+deriving via (P.WrappedArrow Rewrite)   instance Choice Rewrite
 
 instance Monad (Rewrite t) where
   (>>=) = Then
